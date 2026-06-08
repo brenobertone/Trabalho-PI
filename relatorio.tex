@@ -1,0 +1,227 @@
+%\centerline{\large \textbf{Resumo}}
+%\vskip 20mm
+
+
+
+%\clearpage
+%\centerline{\large \textbf{Abstract}}
+%\vskip 20mm
+
+\clearpage
+
+\section{Introdução}
+
+O problema de localização de centros de distribuição frequentemente emerge no planejamento estratégico de empresas do setor público e privado, como no planejamento da construção de redes de telecomunicação, rotas de aviões e de entrega postal. Esse problema aparece quando o tráfego entre nós de uma rede precisa ser roteado através de um conjunto de nós intermediários denominados hubs. Os hubs, que são completamente interconectados, facilitam o fluxo de tráfego. Os nós que não são hubs, que chamaremos de clientes, são conectados a nós hubs. Muitas vezes há um interesse simultâneo em decidir a localização dos hubs e a alocação dos clientes aos seus respectivos hubs, que servem como pontos de baldeação para o fluxo entre nós clientes. Fluxos não-negativos são associados a cada par origem-destino (O-D) de nós da rede. Além disso, entre quaisquer dois nós existe um custo baseado em fatores como tempo, dinheiro e distância paro o roteamento de fluxo entre esses nós. Geralmente os fluxos são roteados por um ou dois hubs. O objetivo é encontrar a localização de hubs e alocação de clientes a hubs que minimizam o custo de roteamento do tráfego ao longo da rede \cite{Ernst1996}.
+
+ Esse é o caso do problema USApHMP, do inglês \textit{uncapacitated, single allocation p-hub median problem}, que pode ser traduzido como problema de p-hub mediana não-capacitado e de alocação única. Vamos destrinchar esse nome.
+
+Dado um grafo completo $G = (N, A)$, onde $N = {1,\dots, n}$ representa o conjunto de nós (vértices), que interpretaremos como os clientes, e $A = N \times N$ representa o conjunto de arcos (arestas) do grafo, e um número $p$, que representa o número de hubs para localizar, os problemas de p-hub mediana são aqueles que se preocupam em decidir a localização desses $p$ hubs, sendo que é permitido que esses centros sejam inseridos em qualquer ponto dos arcos que conectam quaisquer dois nós de clientes. Demonstra-se \cite{Arenales2015} que existe uma solução ótima em que os hubs situam-se no conjunto de nós do grafo, i.e., situam-se no mesmo lugar que um subconjunto dos clientes. Assim, podemos representar o conjunto dos hubs como $H \subset N$.
+
+O termo "não-capacitado" refere-se à capacidade (seja essa de armazenamento, produção, processamento, etc.) dos hubs. Um problema capacitado é aquele no qual considera-se que cada hub possui uma capacidade limitada e conhecida, enquanto o problema não-capacitado desconsidera essa limitação, ou seja, considera que os hubs possuem capacidade ilimitada.
+
+Por fim, alocação única diz respeito ao subproblema de alocação de clientes a hubs. Nesse tipo de problema consideramos que cada nó cliente é alocado a um e somente um nó hub. Note que o cliente representado pelo mesmo nó que um hub é alocado trivalmente a esse mesmo hub.
+
+ No presente trabalho vamos explorar o problema USApHMP a partir do artigo \cite{Ernst1996}, que introduziu o banco de dados \textit{Australia Post} (AP), da empresa distribuidora nacional de correio australiana. O artigo é resultado de uma consultoria que os autores prestaram à empresa, na qual eles analisaram o problema de definir centros de distribuição de correio e alocação de distritos de mesmo código postais aos centros como um USApHMP. Além disso, o artigo explora diferentes formulações do problema, e finalmente soluciona uma delas com a meta-heurística de \textit{simulated annealing}  (recozimento simulado, em português) combinada com o método \textit{Branch and Bound}.
+
+ No problema de distribuição postal, para cada par de nós $(i,j)$, temos uma demanda de fluxo $W_{ij}$, que caracteriza o volume de tráfego postal, e a distância $d_{ij}$ entre esse par. Cada fluxo $W_{ij}$ de $i$ a $j$ possui três fases associados:
+ \begin{enumerate}
+    \item Coleta: o fluxo é transportado da origem no nó $i$ ao nó \textit{hub} $k$;
+    \item Transferência: o fluxo é transportado do \textit{hub} $k$ em direção ao \textit{hub} $l$;
+    \item Distribuição: o fluxo é transportado do \textit{hub} $l$ ao destino final no nó $j$.
+\end{enumerate}
+Para cada fase do fluxo, há um custo associado: $\mathcal{X}$ é o custo da coleta, $\alpha$ é o custo da transferência e $\delta$ é o custo de distribuição.
+
+\begin{figure}[htbp]
+    \centering
+    % Chama o PDF gerado pela nossa compilação
+    \includegraphics[width=0.9\textwidth]{fluxo_usaphmp.pdf}
+    \caption{Ilustração das três fases de fluxo em uma rede com dois \textit{hubs}: coleta a partir da origem $i$ para o \textit{hub} $k$, transferência entre os
+ \textit{hubs} $k$ e $l$, e distribuição do \textit{hub} $l$ para o destino final $j$.}
+    \label{fig:fluxo_usaphmp}
+\end{figure}
+
+A partir dessa estrutura básica do problema, há na lituratura diversas formulações para o problema USApHMP, das quais vamos apresentar algumas a seguir.
+
+\section{Formulações}
+\subsection{Formulação USApHMP-Q}
+A primeira formulação do problema USApHMP foi proposta por O'Kelly em \cite{OKelly1987} e é denominada formulação quadrática.
+
+Para cada par de nós $(i, j)$, sejam as variáveis de decisão $Z_{ij}=1$ se o nó $i$ é alocado ao \textit{hub} $j$ e $Z_{ij} = 0$ caso contrário. Quando $i=j=k$ e $Z_{kk}=1$, temos que o nó $k$ é designado como um \textit{hub}. Assim, a formulação quadrática (USApHMP-Q) é dada por
+\begin{align}
+        &\min \sum_{i \in \mathbb{N}}\sum_{k \in \mathbb{N}}\sum_{l \in \mathbb{N}}\sum_{j \in \mathbb{N}}W_{ij}(\mathcal{X}d_{ik}Z_{ik}+\alpha d_{kl}Z_{ik}Z_{jl}+\delta d_{jl}Z_{jl}) \nonumber\\ & \text{sujeito a:} \nonumber\\ & \sum_{k \in \mathbb{N}}Z_{kk}=p, \label{eq1}\\ &\sum_{k \in \mathbb{N}}Z_{ik}=1, \label{eq2}\quad \forall i \in \mathbb{N} \\ & Z_{ik} \leq Z_{kk}, \forall i,k \in \mathbb{N} \label{eq3} \\ & Z_{ik} \in \{0,1\}, \forall i,k \in \mathbb{N}. \label{eq4}
+\end{align}
+
+A equação \ref{eq1} assegura que exatamente $p$ \textit{hubs} serão escolhidos. As equações \ref{eq2} e \ref{eq3} garantem que cada nó será alocado a apenas um \textit{hub}. A equação \ref{eq3} previne a alocação para nós que não são \textit{hubs}.
+
+Por se tratar de um problema inteiro quadrático, é muito difícil obter uma solução exata a para o USApHMP-Q.
+
+\subsection{Formulação USApHMP-LP}
+A segunda formulação considera uma variável $X_{ijkl}$ que corresponde à fração do fluxo total entre os nós $i$ e $j$ que passa por meio dos \textit{hubs} $k$ e $l$. Além disso, o custo é reformulado para $C_{ijkl}$, que representa o custo de uma unidade de tráfego por este caminho. A equação dessa formulação é dada por
+\begin{align}
+        &\min \sum_{i \in \mathbb{N}}\sum_{k \in \mathbb{N}}\sum_{l \in \mathbb{N}}\sum_{j \in \mathbb{N}}W_{ij}C_{ijkl}X_{ijkl} \\ & \text{sujeito a:} \\ & \sum_{k \in \mathbb{N}}Z_{kk}=p, \label{eq11}\\ &\sum_{k \in \mathbb{N}}Z_{ik}=1, \label{eq12}\quad \forall i \in \mathbb{N} \\ & Z_{ik} \leq Z_{kk}, \forall i,k \in \mathbb{N} \label{eq14} \\ & \sum_{l \in \mathbb{N}}X_{ijkl} = Z_{ik}, \forall i,j,k \in \mathbb{N} \\ & \sum_{k \in \mathbb{N}}X_{ijkl} = Z_{jl}, \forall i,j,l \in \mathbb{N}\\ & Z_{ik} \in \{0,1\}, \forall i,k \in \mathbb{N}. \label{eq13} \\ & X_{ijkl} \geq 0, \quad \forall i,j,k,l \in \mathbb{N}.
+\end{align}
+
+Aqui, os termos quadráticos da formulação anterior são linearizados através da variável $X_{ijkl}$, mas ao custo de introduzir mais índices, causando uma explosão de variáveis na ordem de $\mathcal{O}(n^4)$ e de restrições em $\mathcal{O}(n^3)$.
+
+\subsection{Formulação USApHMP-N}
+
+A terceira formulação busca resolver problemas maiores, removendo a variável $X_{ijkl}$, tratando as transferências entre \textit{hubs} como um problema de fluxo de multi-commodities. Seja $Y_{kl}^i$ a quantidade de fluxo do commodity $i$ entre os \textit{hubs} $k$ e $l$. Definindo $O_i=\sum_{j \in \mathbb{N}}W{ij}$ e $D_i=\sum_{j \in \mathbb{N}}W{ji}$, a terceira formulação é dada por
+\begin{align}
+    &\min \sum_{i \in \mathbb{N}}\sum_{k \in \mathbb{N}} d_{ik}Z_{ik}(\mathcal{X}O_i+\delta D_i)+\sum_{i \in \mathbb{N}}\sum_{k \in \mathbb{N}}\sum_{l \in \mathbb{N}}\alpha d_{kl}Y_{kl}^i
+    \\ &\text{sujeito a} \\ & \sum_{k \in \mathbb{N}}Z_{kk}=p \\ & \sum_{k \in \mathbb{N}} Z_{ik}=1, \quad \forall i \in \mathbb{N} \\ & Z_{ik} \leq Z{kk}, \quad \forall i,k \in \mathbb{N} \\ & \sum_{l \in \mathbb{N}}Y_{kl}^i-\sum_{l \in \mathbb{N}}Y_{lk}^i= O_iZ_{ik}-\sum_{j \in \mathbb{N}}W_{ij}Z_{jk} \label{eq31}\\ & Z_{ik} \in \{0,1\}, \quad \forall i,k \in \mathbb{N} \\ & Y_{kl}^i \geq 0, \quad \forall i,k,l \in \mathbb{N},
+\end{align}
+onde a equação \ref{eq31} é a equação de divergência para o \textit{commodity} $i$ no nó $k$ em um grafo completo, onde a demanda e oferta de cada nó é dada pelas alocações $Z_{ik}$. Em comparação às formulações anteriores, esta diminui a dimensão do problema, uma vez que as variáveis são de ordem $\mathcal{O}(n^3)$ e as restrições $\mathcal{O}(n^2)$. Esta formulação é resolvida usando uma técnica de \textit{branch-and-bound} baseada na relaxação linear.
+
+\section{Heurística de \textit{Simulated Annealing} no Nó Raiz}
+
+No desenvolvimento do método exato para o problema, uma meta-heurística de busca por vizinhança é aplicada ao nó raiz da árvore de \textit{branch-and-bound}. O objetivo principal desta etapa é obter um limite superior (\textit{upper-bound}) de alta qualidade, auxiliando a mitigar a fraqueza da relaxação linear inicial do modelo USApHMP-N e permitindo a rápida fixação de variáveis.
+
+O algoritmo funciona definindo uma temperatura inicial \cite{white1984} e passando por fases estruturadas de resfriamento e reaquecimento. A temperatura é o parâmetro responsável por controlar a frequência com que soluções com piora na função objetivo são aceitas. Ao permitir movimentos de piora, a heurística ganha a capacidade de escapar de mínimos locais e explorar áreas mais promissoras no espaço de soluções.
+
+A cada iteração, o algoritmo perturba a solução corrente utilizando três operadores de vizinhança. Para garantir a viabilidade e a rapidez da meta-heurística, são empregadas atualizações incrementais de custo. Essa abordagem algébrica avalia rapidamente as diferenças de custo ($\Delta$) das soluções vizinhas, calculando apenas a variação de impacto (delta de fluxo e distância) do movimento em tempo computacional mínimo, sem a necessidade de reavaliar toda a função objetivo iterativamente.
+
+\subsection{Temperatura Inicial, Resfriamento e Aquecimento}
+
+A dinâmica térmica do algoritmo rege o balanço entre exploração e intensificação da busca:
+
+\begin{itemize}
+    \item \textbf{Temperatura Inicial ($T_0$):} Seguindo o referencial de White (1984) \cite{white1984}, a temperatura inicial é definida com base no desvio padrão dos custos, avaliado a partir de uma amostra preliminar de aceitação de vizinhos.
+    \item \textbf{Resfriamento:} É adotado um esquema de resfriamento geométrico, onde a temperatura decai sendo multiplicada por um fator de $0.97$ ao final de cada cadeia de Markov. O comprimento de cada cadeia é estipulado em $2np$ (onde $n$ é o número total de nós e $p$ o número de hubs).
+    \item \textbf{Reaquecimento:} Se o algoritmo convergir prematuramente e não apresentar melhoras na função objetivo após cinco cadeias de Markov consecutivas, um processo de reaquecimento é acionado \cite{osman1993}. O algoritmo pode executar até quatro reaquecimentos. Adicionalmente, a cada reaquecimento, a probabilidade de selecionar o operador \textit{Swap} é incrementada em $0.05$, incentivando a diversificação das alocações nas fases finais.
+\end{itemize}
+
+\subsection{Operadores de Vizinhança}
+
+A geração de soluções vizinhas candidatas ($S'$) a partir de uma solução atual ($S$) é realizada de maneira estocástica, aplicando-se um dos três seguintes operadores de perturbação sobre os \textit{clusters} (um \textit{cluster} compreende um hub e todos os nós alocados a ele):
+
+\begin{itemize}
+    \item \textbf{\textit{Swap}:} Modifica a alocação de um nó não-hub, selecionando-o aleatoriamente e transferindo-o de seu \textit{cluster} atual para um \textit{cluster} distinto. A probabilidade inicial de sorteio deste operador é de $40\%$.
+    \item \textbf{\textit{Move}:} Altera estrategicamente o hub dentro de um mesmo \textit{cluster} (contanto que este possua ao menos dois nós). Um nó não-hub é promovido a hub, enquanto o hub atual é rebaixado a nó comum, mantendo inalterados os componentes do \textit{cluster}. Sua probabilidade inicial de sorteio é de $60\%$.
+    \item \textbf{\textit{Singleton Move}:} Operador engatilhado como exceção quando o \textit{cluster} selecionado para o operador \textit{Move} é um \textit{singleton} (i.e., é composto exclusivamente pelo hub, sem nós satélites). Neste caso, um nó de outro \textit{cluster} é selecionado aleatoriamente para se tornar o novo hub isolado, e o antigo hub perde seu status, sendo alocado como nó comum em outro \textit{cluster} já existente.
+\end{itemize}
+
+\subsection{Pseudo-código}
+
+O fluxo de execução do método de aquecimento simulado, bem como seu critério de aceitação (baseado na probabilidade de Boltzmann), é detalhado de forma estruturada no Algoritmo \ref{alg:sa}.
+
+\begin{algorithm}[H]
+\caption{Meta-heurística de \textit{Simulated Annealing}}
+\label{alg:sa}
+\begin{algorithmic}[1]
+\Require Instância do problema, comprimento da cadeia $2np$, decaimento $0.97$
+\State Gerar solução viável inicial $S$
+\State $S^* \gets S$ \Comment{Inicializa a melhor solução global}
+\State $T \gets T_0$ \Comment{Temperatura inicial via desvio padrão da amostra \cite{white1984}}
+\State $P(\text{Swap}) \gets 0.4$, $P(\text{Move}) \gets 0.6$
+\State $c \gets 0$ \Comment{Contador de cadeias sem melhora}
+\State $r \gets 0$ \Comment{Contador de reaquecimentos}
+\While{$r \le 4$} \Comment{Limite de quatro reaquecimentos \cite{osman1993}}
+    \While{$c \le 5$} \Comment{Condição de estagnação: $5$ cadeias sem melhora}
+        \For{$i = 1$ \textbf{to} $2np$}
+            \State Selecionar operador de vizinhança conforme $P(\text{Swap})$ e $P(\text{Move})$
+            \State Gerar solução vizinha $S'$ a partir de $S$ (aplicando Swap, Move ou Singleton Move)
+            \State Calcular $\Delta = \text{Custo}(S') - \text{Custo}(S)$ usando atualizações incrementais
+            \If{$\Delta < 0$ \textbf{or} $\text{Random}(0,1) < \exp(-\Delta / T)$}
+                \State $S \gets S'$ \Comment{Critério de aceitação de Boltzmann}
+                \If{$\text{Custo}(S) < \text{Custo}(S^*)$}
+                    \State $S^* \gets S$ \Comment{Atualiza melhor solução conhecida}
+                    \State $c \gets 0$ \Comment{Zera o contador por ter havido melhora global}
+                \EndIf
+            \EndIf
+        \EndFor
+        \State $T \gets 0.97 \times T$ \Comment{Decaimento da temperatura via resfriamento geométrico}
+        \State $c \gets c + 1$
+    \EndWhile
+    \State Executar procedimento de reaquecimento
+    \State $T \gets T_{\text{reaquecimento}}$
+    \State $P(\text{Swap}) \gets P(\text{Swap}) + 0.05$ \Comment{Intensifica buscas no espaço de alocações}
+    \State $r \gets r + 1$
+    \State $c \gets 0$
+\EndWhile
+\State \Return $S^*$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Regras de \textit{Branch-and-Bound}}
+
+Para a resolução exata do problema, emprega-se um algoritmo de \textit{branch-and-bound} onde a relaxação linear (LP) do modelo USApHMP-N é resolvida em cada nó da árvore de busca. Dado que a formulação USApHMP-N possui limites inferiores mais fracos que o tradicional USApHMP-LP, o método apoia-se em um forte limite superior (\textit{upper bound}) proveniente da meta-heurística \textit{Simulated Annealing} para implementar fixação agressiva de variáveis e em estratégias customizadas de ramificação.
+
+\subsection{Fixação de Variáveis}
+
+A técnica avalia os custos reduzidos das variáveis não-básicas na solução ótima da relaxação linear no nó. Seja $V_{LP}$ o valor da relaxação linear, $\bar{c}_{ik}$ o custo reduzido associado a uma variável não-básica $Z_{ik} = 0$, e $V_{UB}$ o limite superior global. A fixação ocorre se:
+\begin{equation}
+    V_{LP} + \bar{c}_{ik} > V_{UB}
+\end{equation}
+Satisfeita a condição, $Z_{ik}$ é permanentemente fixada em $0$. Por conseguinte, as variáveis de fluxo associadas $Y_{ikl}$ (para todo $l \in N$) também são fixadas em $0$, reduzindo o problema.
+
+\subsection{Regras de Ramificação (\textit{Branching Rules})}
+
+Dentre as diversas regras exploradas pelos autores, a implementação final do algoritmo adota uma hierarquia estrita (BC1, BC2, BC3 e BC6), priorizando a resolução de instabilidades nas localizações dos hubs ($Z_{kk}$) antes de agir sobre as alocações cliente-hub ($Z_{ik}$).
+
+\subsubsection{BC1 (Pares de Hubs Fracionários)}
+Esta regra é acionada quando a relaxação linear apresenta múltiplas variáveis de localização de hubs com valores fracionários. Nesses casos, selecionam-se os dois nós candidatos $s$ e $t$ cuja soma de valores fracionários seja máxima, respeitando a condição:
+\begin{equation*}
+    Z_{ss} + Z_{tt} = \max\{ Z_{kk} + Z_{ll} \mid k \neq l;\, 0 < Z_{kk} < 1;\, 0 < Z_{ll} < 1;\, Z_{kk} + Z_{ll} > 1.0 \}
+\end{equation*}
+A ramificação prossegue criando dois subproblemas através de restrições disjuntivas: o primeiro ramo impõe que ambos os nós sejam abertos como hubs ($Z_{ss} + Z_{tt} \ge 2$), enquanto o segundo ramo impõe que no máximo um deles seja aberto ($Z_{ss} + Z_{tt} \le 1$).
+
+\subsubsection{BC2 (Extensão de Hubs)}
+Esta regra é aplicada quando a regra BC1 não pode ser utilizada, mas existe pelo menos um nó cuja variável de hub indique a abertura confirmada ($Z_{ss}=1$) e outras variáveis de hub ainda fracionárias. Seleciona-se então o candidato fracionário $t$ que maximize a soma:
+\begin{equation*}
+    Z_{ss} + Z_{tt} = \max \{ Z_{ss} + Z_{ll} \mid l \neq s;\, Z_{ss} = 1;\, 0 < Z_{ll} < 1 \}
+\end{equation*}
+Dado que $Z_{ss}=1$, a ramificação disjuntiva com as restrições ($Z_{ss} + Z_{tt} \ge 2$ e $Z_{ss} + Z_{tt} \le 1$) atua diretamente forçando a variável $Z_{tt}$ a assumir o valor $1$ no primeiro ramo e o valor $0$ no segundo.
+
+\subsubsection{BC3 (Decisão Individual de Hub)}
+Aplicada exclusivamente quando as condições das regras BC1 e BC2 não são satisfeitas, ou seja, quando a soma de qualquer par de variáveis fracionárias é menor ou igual a $1.0$. Neste cenário, a ramificação ocorre de forma clássica sobre uma única variável de hub, bifurcando em $Z_{kk}=1$ e $Z_{kk}=0$, priorizando a variável cujo valor indique a maior violação de integralidade.
+
+
+\subsubsection{BC6 (A FAZER)}
+
+\subsection{Pseudo-código do Nó de Avaliação}
+
+O Algoritmo \ref{alg:bb} formaliza a avaliação de nós e a aplicação exclusiva das estratégias implementadas.
+
+\begin{algorithm}[H]
+\caption{Avaliação do Nó no \textit{Branch-and-Bound}}
+\label{alg:bb}
+\begin{algorithmic}[1]
+\Require Nó atual $N$, limite superior $V_{UB}$
+\State Obter limite $V_{LP}$ e custos reduzidos $\bar{c}$ na resolução da relaxação linear (LP)
+\If{LP é inviável \textbf{ou} $V_{LP} \ge V_{UB}$}
+    \State \Return Podar nó $N$
+\EndIf
+\If{Solução LP atende às restrições de integralidade}
+    \State $V_{UB} \gets V_{LP}$
+    \State \Return Podar nó $N$
+\EndIf
+\State \Comment{\textbf{Fixação de Variáveis}}
+\For{cada variável não-básica $Z_{ik} = 0$}
+    \If{$V_{LP} + \bar{c}_{ik} > V_{UB}$}
+        \State Fixar $Z_{ik} \gets 0$ e $Y_{ikl} \gets 0$ correspondentes para a subárvore
+    \EndIf
+\EndFor
+\State \Comment{\textbf{Adoção de Regra de Ramificação (Implementação Final)}}
+\If{existem variáveis de hub $Z_{kk}$ fracionárias}
+    \If{existem pares onde $Z_{kk} + Z_{ll} > 1.0$}
+        \State Aplicar \textbf{BC1}: Ramificar disjuntivamente em par de locais candidatos
+    \ElsIf{existe algum hub confirmado onde $Z_{ss} = 1$}
+        \State Aplicar \textbf{BC2}: Ramificar forçando decisão sobre o candidato restante
+    \Else
+        \State Aplicar \textbf{BC3}: Ramificar sobre a variável de hub individual $Z_{kk}$
+    \EndIf
+\Else
+    \State \Comment{Hubs estão consolidados; restam alocações $Z_{ik}$ fracionárias}
+
+    \State Aplicar \textbf{BC6}
+\EndIf
+\State \Return Subproblemas instanciados
+\end{algorithmic}
+\end{algorithm}
+
+
+\section{Resultados e Discussão}
+
+\section{Conclusão}
+
+\printbibliography
