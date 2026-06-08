@@ -1,6 +1,6 @@
 /***********************************************************************
   File:         generate.c
-  Language:     C 
+  Language:     C
   Authors:      Andreas Ernst & Mohan Krishnamoorthy
   Purpose:      Generate subproblems for hub location problems of a given
                 size from the full data set. The main processing is to
@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 #define N_ROWS   5              /* number of y subdivisions */
-#define NEW_ARRAY(x,type,size) if((x=(type *)malloc((size)*sizeof(type)))==NULL){fprintf(stderr,"ERROR: Out of memory in %s line %d\n",__FILE__,__LINE__);exit(1);} 
+#define NEW_ARRAY(x,type,size) if((x=(type *)malloc((size)*sizeof(type)))==NULL){fprintf(stderr,"ERROR: Out of memory in %s line %d\n",__FILE__,__LINE__);exit(1);}
 
 typedef struct{
   int i;                        /* index in original */
@@ -81,7 +81,7 @@ void main(int argc,char **argv)
     fprintf(stderr,"ERROR: Number of nodes must be a multiple of %d\n",N_ROWS);
     exit(1);
   }
-  
+
   /******************** Read data file *********************************/
   fscanf(in,"%d ",&NN); /* read in number of nodes & skip hub number */
   NEW_ARRAY(pts,coordinate,NN);
@@ -142,7 +142,7 @@ void main(int argc,char **argv)
     new_y[pts[p].new_i] += OD[pts[p].i]*pts[p].y;
     new_OD[pts[p].new_i] += OD[pts[p].i];
     for(q=0;q<NN;q++)
-      new_w[pts[p].new_i][pts[q].new_i] += w[pts[p].i][pts[q].i];   
+      new_w[pts[p].new_i][pts[q].new_i] += w[pts[p].i][pts[q].i];
   }
   for(p=0;p<nn;p++){    /* new coordinates are weighted average of the old */
     new_x[p] /= new_OD[p];
@@ -159,4 +159,3 @@ void main(int argc,char **argv)
   /* number of hubs, and costs per unit distance */
   printf("%d\n%f\n%f\n%f\n",np,collect,transfer,distribute);
 }
-    

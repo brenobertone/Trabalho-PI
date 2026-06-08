@@ -8,7 +8,7 @@
 
 #define N_ROWS	 5				/* number of y subdivisions */
 #define INPUT_FILE "/home/andreas/p-hub/data/austpost/d212X8.full"
-#define NEW_ARRAY(x,type,size) if((x=(type *)malloc((size)*sizeof(type)))==NULL){fprintf(stderr,"ERROR: Out of memory in %s line %d\n",__FILE__,__LINE__);exit(1);} 
+#define NEW_ARRAY(x,type,size) if((x=(type *)malloc((size)*sizeof(type)))==NULL){fprintf(stderr,"ERROR: Out of memory in %s line %d\n",__FILE__,__LINE__);exit(1);}
 
 typedef struct{
   int i;						/* index in original */
@@ -43,7 +43,7 @@ void main(int argc,char **argv)
   int step,row_end,row_start,row_step,row_remainder;
   int n_cols,col_step,col_remainder,col_start,col_end;
   double *new_x,*new_y,**new_w;
-  
+
   /* read file */
   fscanf(in,"%d %d",&NN,&np);	/* read in number of nodes & skip hub number */
   NEW_ARRAY(pts,coordinate,NN);
@@ -87,7 +87,7 @@ void main(int argc,char **argv)
   /* calculate new w's */
   for(p=0;p<NN;p++){
 	for(q=0;q<NN;q++)
-	  new_w[pts[p].new_i][pts[q].new_i] += w[pts[p].i][pts[q].i];	
+	  new_w[pts[p].new_i][pts[q].new_i] += w[pts[p].i][pts[q].i];
   }
 
   /* Write out new problem */
@@ -98,6 +98,5 @@ void main(int argc,char **argv)
   for(p=0;p<nn;p++)
 	for(q=0;q<nn;q++)
 	  printf("%5.5f%c",new_w[p][q],((q==nn-1) ? '\n' : ' '));
-  printf("%d\n%f\n%f\n%f\n",np,collect,transfer,distribute);  
+  printf("%d\n%f\n%f\n%f\n",np,collect,transfer,distribute);
 }
-	
